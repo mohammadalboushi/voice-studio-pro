@@ -226,59 +226,23 @@ window.startProcessing = async function() {
 
     const getUrl = (i) => typeof i === 'string' ? i : (i?.url || (i?.path ? "https://thestinger-uvr5-ui.hf.space/file=" + i.path : ''));
     
-    // دوال لرفع الصوت برمجياً وتحويله لـ WAV
-    const bufferToWav = (abuffer) => {
-      const numOfChan = abuffer.numberOfChannels, length = abuffer.length * numOfChan * 2 + 44;
-      const buffer = new ArrayBuffer(length), view = new DataView(buffer), channels = [];
-      let pos = 0;
-      const set16 = (d) => { view.setUint16(pos, d, true); pos += 2; };
-      const set32 = (d) => { view.setUint32(pos, d, true); pos += 4; };
-      set32(0x46464952); set32(length - 8); set32(0x45564157);
-      set32(0x20746d66); set32(16); set16(1); set16(numOfChan);
-      set32(abuffer.sampleRate); set32(abuffer.sampleRate * 2 * numOfChan);
-      set16(numOfChan * 2); set16(16); set32(0x61746164); set32(length - pos - 4);
-      for (let i = 0; i < numOfChan; i++) channels.push(abuffer.getChannelData(i));
-      for (let offset = 0; pos < length; offset++) {
-        for (let i = 0; i < numOfChan; i++) {
-          let s = Math.max(-1, Math.min(1, channels[i][offset]));
-          view.setInt16(pos, s < 0 ? s * 32768 : s * 32767, true); pos += 2;
-        }
-      }
-      return new Blob([buffer], { type: "audio/wav" });
-    };
-
-    const amplifyAudio = async (blob, gainValue = 2.5) => {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const audioBuffer = await ctx.decodeAudioData(await blob.arrayBuffer());
-      const offlineCtx = new OfflineAudioContext(audioBuffer.numberOfChannels, audioBuffer.length, audioBuffer.sampleRate);
-      const source = offlineCtx.createBufferSource();
-      source.buffer = audioBuffer;
-      const gainNode = offlineCtx.createGain();
-      gainNode.gain.value = gainValue; // قوة رفع الصوت (2.5 يعني ضعفين ونص)
-      source.connect(gainNode);
-      gainNode.connect(offlineCtx.destination);
-      source.start();
-      return bufferToWav(await offlineCtx.startRendering());
-    };
-
-    // سحب الملفات، تضخيم الصوت، وتخزينها كملف محلي
-    const fetchWithAuthAndAmplify = async (url) => {
+    // السحب المباشر والسريع بدون تضخيم
+    const fetchWithAuth = async (url) => {
       if (!url) return '';
       try {
         const res = await fetch(url, { headers: { "Authorization": `Bearer ${savedToken}` } });
-        if (!res.ok) return url;
-        let blob = await res.blob();
-        blob = await amplifyAudio(blob, 2.5); // هون بيتم التضخيم
+        // إذا فشل الطلب، منرجع قيمة فاضية بدل الرابط عشان المتصفح ما يحمل صفحة HTML
+        if (!res.ok) return ''; 
+        const blob = await res.blob();
         return URL.createObjectURL(blob);
       } catch (e) {
-        return url;
+        return '';
       }
     };
 
-    const [instBlob, vocalBlob] = await Promise.all([
-      fetchWithAuthAndAmplify(getUrl(result.data[0])),
-      fetchWithAuthAndAmplify(getUrl(result.data[1]))
-    ]);
+    // هون السر: طلبنا الملفات بالترتيب (واحد ورا التاني) عشان السيرفر ما يعمل بلوك للطلب التاني
+    const instBlob = await fetchWithAuth(getUrl(result.data[0]));
+    const vocalBlob = await fetchWithAuth(getUrl(result.data[1]));
 
     document.getElementById('instAudio').src = instBlob;
     document.getElementById('vocalAudio').src = vocalBlob;
