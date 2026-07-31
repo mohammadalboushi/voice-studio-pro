@@ -191,6 +191,13 @@ window.downloadAudio = async function(id, name) {
 
 window.startProcessing = async function() {
   if (!currentFile) return showToast('اختر ملف صوتي أولاً', 'warning');
+  
+  const savedToken = localStorage.getItem('hf_token');
+  if (!savedToken) {
+    showToast('يرجى وضع توكن Hugging Face في صفحة الإعدادات أولاً', 'error');
+    showPage('settings');
+    return;
+  }
 
   document.getElementById('processBtn').disabled = true;
   document.getElementById('progressSection').classList.add('show');
@@ -210,7 +217,7 @@ window.startProcessing = async function() {
   }, 300);
 
   try {
-    const client = await Client.connect("TheStinger/UVR5_UI");
+    const client = await Client.connect("TheStinger/UVR5_UI", { hf_token: savedToken });
     const result = await client.predict("/vrarch_separator", {
       audio: currentFile,
       model: "6_HP-Karaoke-UVR.pth",
@@ -245,7 +252,8 @@ window.startProcessing = async function() {
     }, 1000);
   } catch (err) {
     clearInterval(simInterval);
-    showToast('وصلت للحد الأقصى! شغل الـ VPN وأعد المحاولة.', 'error');
+    console.error(err);
+    showToast('حدث خطأ! تأكد من صحة التوكن في الإعدادات.', 'error');
     document.getElementById('processBtn').disabled = false;
     document.getElementById('progressSection').classList.remove('show');
   }
@@ -316,8 +324,14 @@ window.clearHistory = function() {
 }
 
 window.saveSettings = function() {
+  const token = document.getElementById('hf_token_input').value;
+  if (token) {
+    localStorage.setItem('hf_token', token.trim());
+  }
   showToast('✅ تم حفظ الإعدادات', 'success');
 }
+
+document.getElementById('hf_token_input').value = localStorage.getItem('hf_token') || '';
 
 loadHistory();
 showToast('👋 مرحباً بك في Voice Studio', 'success');
