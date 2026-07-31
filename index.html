@@ -45,7 +45,6 @@
       <div class="nav-links">
         <a href="#" class="nav-link" onclick="showPage('home')">الرئيسية</a>
         <a href="#" class="nav-link" onclick="showPage('history')">السجل</a>
-        <a href="#" class="nav-link" onclick="showPage('settings')">الإعدادات</a>
       </div>
     </div>
   </nav>
@@ -243,29 +242,7 @@
     </div>
   </div>
 
-  <!-- SETTINGS PAGE -->
-  <div id="settings" class="page">
-    <div class="container">
-      <h1 style="margin-bottom: 2rem;">⚙️ الإعدادات المتقدمة</h1>
-      <div class="main-card">
-        <div class="settings-section show">
-          <div class="settings-title">
-            <i class="fas fa-sliders"></i> إعدادات المحرك المتقدمة
-          </div>
-          
-          <div class="setting-group" style="margin-bottom: 1.5rem;">
-            <label class="setting-label">Hugging Face Token (مفتاح الربط)</label>
-            <input type="password" id="hf_token_input" class="setting-input" placeholder="hf_..." style="width: 100%;">
-            <small style="color: var(--text-light); margin-top: 0.5rem; display: block;">سيتم حفظ المفتاح في متصفحك فقط بشكل آمن.</small>
-          </div>
-
-          <button class="btn btn-primary" onclick="saveSettings()">
-            <i class="fas fa-save"></i> حفظ الإعدادات
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- تم إزالة صفحة الإعدادات للنسخة العامة -->
 
   <!-- TOAST CONTAINER -->
   <div class="toast-container" id="toastContainer"></div>

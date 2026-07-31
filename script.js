@@ -177,13 +177,6 @@ window.downloadAudio = function(id, name) {
 
 window.startProcessing = async function() {
   if (!currentFile) return showToast('اختر ملف صوتي أولاً', 'warning');
-  
-  const savedToken = localStorage.getItem('hf_token');
-  if (!savedToken) {
-    showToast('يرجى وضع توكن Hugging Face في صفحة الإعدادات أولاً', 'error');
-    showPage('settings');
-    return;
-  }
 
   document.getElementById('processBtn').disabled = true;
   document.getElementById('progressSection').classList.add('show');
@@ -203,7 +196,8 @@ window.startProcessing = async function() {
   }, 300);
 
   try {
-    const client = await Client.connect("TheStinger/UVR5_UI", { hf_token: savedToken });
+    // الاتصال المباشر بالسيرفر بدون توكن (يعتمد على الحصة المجانية IP)
+    const client = await Client.connect("TheStinger/UVR5_UI");
     const result = await client.predict("/vrarch_separator", {
       audio: currentFile,
       model: "6_HP-Karaoke-UVR.pth",
@@ -226,12 +220,11 @@ window.startProcessing = async function() {
 
     const getUrl = (i) => typeof i === 'string' ? i : (i?.url || (i?.path ? "https://thestinger-uvr5-ui.hf.space/file=" + i.path : ''));
     
-    // السحب المباشر والسريع بدون تضخيم
-    const fetchWithAuth = async (url) => {
+    // سحب الملفات برمجياً بدون توكن أو Authorization Header
+    const fetchFile = async (url) => {
       if (!url) return '';
       try {
-        const res = await fetch(url, { headers: { "Authorization": `Bearer ${savedToken}` } });
-        // إذا فشل الطلب، منرجع قيمة فاضية بدل الرابط عشان المتصفح ما يحمل صفحة HTML
+        const res = await fetch(url);
         if (!res.ok) return ''; 
         const blob = await res.blob();
         return URL.createObjectURL(blob);
@@ -240,9 +233,8 @@ window.startProcessing = async function() {
       }
     };
 
-    // هون السر: طلبنا الملفات بالترتيب (واحد ورا التاني) عشان السيرفر ما يعمل بلوك للطلب التاني
-    const instBlob = await fetchWithAuth(getUrl(result.data[0]));
-    const vocalBlob = await fetchWithAuth(getUrl(result.data[1]));
+    const instBlob = await fetchFile(getUrl(result.data[0]));
+    const vocalBlob = await fetchFile(getUrl(result.data[1]));
 
     document.getElementById('instAudio').src = instBlob;
     document.getElementById('vocalAudio').src = vocalBlob;
@@ -261,7 +253,8 @@ window.startProcessing = async function() {
   } catch (err) {
     clearInterval(simInterval);
     console.error(err);
-    showToast('حدث خطأ! تأكد من صحة التوكن في الإعدادات.', 'error');
+    // رسالة تنبيه واضحة للمستخدم بتشغيل كاسر بروكسي عند الحظر المؤقت
+    showToast('فشل الاتصال! يبدو أنك استنفذت المحاولات المجانية، شغل VPN وجرب مجدداً.', 'error');
     document.getElementById('processBtn').disabled = false;
     document.getElementById('progressSection').classList.remove('show');
   }
@@ -330,16 +323,6 @@ window.clearHistory = function() {
   loadHistory();
   showToast('تم مسح السجل بنجاح', 'success');
 }
-
-window.saveSettings = function() {
-  const token = document.getElementById('hf_token_input').value;
-  if (token) {
-    localStorage.setItem('hf_token', token.trim());
-  }
-  showToast('✅ تم حفظ الإعدادات', 'success');
-}
-
-document.getElementById('hf_token_input').value = localStorage.getItem('hf_token') || '';
 
 loadHistory();
 showToast('👋 مرحباً بك في Voice Studio', 'success');
