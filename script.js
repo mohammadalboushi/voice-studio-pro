@@ -211,7 +211,7 @@ window.startProcessing = async function() {
     
     const result = await client.predict("/vrarch_separator", {
       audio: currentFile,
-      model: document.getElementById('cfg_model') ? document.getElementById('cfg_model').value : "2_HP-UVR.pth",
+      model: document.getElementById('cfg_model') ? document.getElementById('cfg_model').value : "5_HP-Karaoke-UVR.pth",
       out_format: "wav",
       window_size: parseInt(document.getElementById('cfg_window').value),
       aggression: parseInt(document.getElementById('cfg_agg').value),
