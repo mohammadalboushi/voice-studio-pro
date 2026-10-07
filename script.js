@@ -211,7 +211,7 @@ window.startProcessing = async function() {
     
     const result = await client.predict("/vrarch_separator", {
       audio: currentFile,
-      model: document.getElementById('cfg_model').value,
+      model: document.getElementById('cfg_model') ? document.getElementById('cfg_model').value : "2_HP-UVR.pth",
       out_format: "wav",
       window_size: parseInt(document.getElementById('cfg_window').value),
       aggression: parseInt(document.getElementById('cfg_agg').value),
@@ -278,8 +278,12 @@ window.startProcessing = async function() {
   } catch (err) {
     clearInterval(simInterval);
     console.error(err);
-    // رسالة الخطأ أصبحت عامة لتناسب حالتي (بتوكن وبدون توكن)
-    showToast('حدث خطأ! تأكد من التوكن، أو إذا كنت بلا توكن فشغل VPN.', 'error');
+    const msg = err.message || '';
+    if (msg.includes('GPU') || msg.includes('queue')) {
+      showToast('⏳ السيرفر عليه ضغط حالياً في Hugging Face، أعد المحاولة بعد لحظات', 'warning');
+    } else {
+      showToast('⚠️ حدث خطأ أثناء المعالجة: ' + (msg.substring(0, 45) || 'تأكد من التوكن أو الاتصال'), 'error');
+    }
     document.getElementById('processBtn').disabled = false;
     document.getElementById('progressSection').classList.remove('show');
   }
