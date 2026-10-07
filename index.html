@@ -31,7 +31,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Cairo:wght@400;600;700;900&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=1.1">
 </head>
 
 <body>
@@ -40,7 +40,7 @@
     <div class="navbar-container">
       <div class="logo">
         <i class="fas fa-music"></i>
-        Voice Studio AI
+        Voice Studio AI <span style="font-size: 0.8rem; background: var(--bg-light); padding: 2px 8px; border-radius: 12px; margin-right: 10px; border: 1px solid var(--border-color); color: var(--text-light);">v1.1</span>
       </div>
             <div class="nav-links">
         <a href="#" class="nav-link" onclick="showPage('home'); return false;">الرئيسية</a>
@@ -267,13 +267,13 @@
     </div>
   </div>
 
-  <!-- TOAST CONTAINER -->
+    <!-- TOAST CONTAINER -->
   <div class="toast-container" id="toastContainer"></div>
 
 
 
 
-    <script type="module" src="script.js"></script>
+    <script type="module" src="script.js?v=1.1"></script>
 
 
 <script>if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').then(r=>console.log('SW registered:',r.scope)).catch(e=>console.error('SW registration failed:',e));});}</script></body></html>
