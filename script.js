@@ -207,13 +207,20 @@ window.startProcessing = async function() {
   }, 300);
 
   try {
-    // الاتصال الذكي: إذا كان لديك توكن سيستخدمه، وإذا لم يكن موجوداً سيتصل مجاناً للزوار
-    let clientConfig = savedToken ? { hf_token: savedToken } : {};
+        // الاتصال الذكي: إذا كان لديك توكن سيستخدمه، وإذا لم يكن موجوداً سيتصل مجاناً للزوار
+    let clientConfig = savedToken ? { token: savedToken, hf_token: savedToken } : {};
     const client = await Client.connect("TheStinger/UVR5_UI", clientConfig);
     
+    // الحل الجذري: تحديد اسم النموذج يدوياً بناءً على الخيار المحدد بدلاً من قراءة النص من الواجهة
+    let safeModelName = "1_HP-UVR.pth"; // الافتراضي: موسيقى فقط
+    const modelSelect = document.getElementById('cfg_model');
+    if (modelSelect && modelSelect.selectedIndex === 0) {
+      safeModelName = "6_HP-Karaoke-UVR.pth"; // موسيقى وكورال
+    }
+
     const result = await client.predict("/vrarch_separator", {
       audio: currentFile,
-      model: document.getElementById('cfg_model') ? document.getElementById('cfg_model').value.replace(/[\u200B-\u200D\uFEFF]/g, '').trim() : "1_HP-UVR.pth",
+      model: safeModelName,
       out_format: "wav",
       window_size: parseInt(document.getElementById('cfg_window').value),
       aggression: parseInt(document.getElementById('cfg_agg').value),
@@ -241,7 +248,7 @@ window.startProcessing = async function() {
 
     const getUrl = (i) => typeof i === 'string' ? i : (i?.url || (i?.path ? "https://thestinger-uvr5-ui.hf.space/file=" + i.path : ''));
     
-    // سحب الملفات الذكي: يرسل التوكن في الـ Headers فقط إذا كان موجوداً
+    // سحب الملفات الذكي
     const fetchAudio = async (url) => {
       if (!url) return '';
       try {
@@ -266,11 +273,9 @@ window.startProcessing = async function() {
     document.getElementById('instAudio').src = instBlob;
     document.getElementById('vocalAudio').src = vocalBlob;
 
-    // إخفاء بطاقة المطرب إذا كانت فارغة أو إذا تم اختيار نموذج الموسيقى فقط
+    // إخفاء بطاقة المطرب بالاعتماد على الاسم الآمن
     const vocalCard = document.querySelector('.result-item.vocal');
-    const selectedModel = document.getElementById('cfg_model') ? document.getElementById('cfg_model').value : '';
-
-    if (!vocalBlob || selectedModel.includes('1_HP-UVR')) {
+    if (!vocalBlob || safeModelName.includes('1_HP-UVR')) {
       vocalCard.style.display = 'none';
     } else {
       vocalCard.style.display = 'block';
@@ -291,10 +296,12 @@ window.startProcessing = async function() {
     clearInterval(simInterval);
     console.error(err);
     const msg = err.message || '';
-    if (msg.includes('GPU') || msg.includes('queue')) {
-      showToast('⏳ السيرفر عليه ضغط حالياً في Hugging Face، أعد المحاولة بعد لحظات', 'warning');
+    if (msg.toLowerCase().includes('quota')) {
+      showToast('🚫 انتهت حصة الاستخدام المجاني لعنوان IP الخاص بك! افتح القفل لاستخدام التوكن.', 'error');
+    } else if (msg.includes('queue')) {
+      showToast('⏳ السيرفر عليه طابور انتظار ممتلئ، أعد المحاولة.', 'warning');
     } else {
-      showToast('⚠️ حدث خطأ أثناء المعالجة: ' + (msg.substring(0, 45) || 'تأكد من التوكن أو الاتصال'), 'error');
+      showToast('⚠️ خطأ من السيرفر: ' + (msg.substring(0, 60) || 'تأكد من التوكن أو الاتصال'), 'error');
     }
     document.getElementById('processBtn').disabled = false;
     document.getElementById('progressSection').classList.remove('show');
