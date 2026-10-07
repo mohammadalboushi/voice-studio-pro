@@ -26,6 +26,7 @@ window.showToast = function(message, type = 'success') {
 window.showPage = function(page) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById(page).classList.add('active');
+  window.scrollTo(0, 0);
 }
 
 window.handleDragOver = function(e) {
@@ -177,6 +178,9 @@ window.downloadAudio = function(id, name) {
 
 window.startProcessing = async function() {
   if (!currentFile) return showToast('اختر ملف صوتي أولاً', 'warning');
+  
+  const savedToken = localStorage.getItem('hf_token');
+  // تم إزالة شرط الإيقاف هنا، الكود سيكمل عمله للجميع (بتوكن أو بدون)
 
   document.getElementById('processBtn').disabled = true;
   document.getElementById('progressSection').classList.add('show');
@@ -196,8 +200,10 @@ window.startProcessing = async function() {
   }, 300);
 
   try {
-    // الاتصال المباشر بالسيرفر بدون توكن (يعتمد على الحصة المجانية IP)
-    const client = await Client.connect("TheStinger/UVR5_UI");
+    // الاتصال الذكي: إذا كان لديك توكن سيستخدمه، وإذا لم يكن موجوداً سيتصل مجاناً للزوار
+    let clientConfig = savedToken ? { hf_token: savedToken } : {};
+    const client = await Client.connect("TheStinger/UVR5_UI", clientConfig);
+    
     const result = await client.predict("/vrarch_separator", {
       audio: currentFile,
       model: "6_HP-Karaoke-UVR.pth",
@@ -205,13 +211,13 @@ window.startProcessing = async function() {
       window_size: parseInt(document.getElementById('cfg_window').value),
       aggression: parseInt(document.getElementById('cfg_agg').value),
       tta: document.getElementById('cfg_tta').checked,
-              post_process: document.getElementById('cfg_post').checked,
-        post_process_threshold: 0.2,
-        high_end_process: document.getElementById('cfg_high').checked,
-        batch_size: 1,
-        norm_thresh: 0.9,
-        amp_thresh: 1.0,
-        single_stem: "(None)"
+            post_process: document.getElementById('cfg_post').checked,
+      post_process_threshold: 0.2,
+      high_end_process: document.getElementById('cfg_high').checked,
+      batch_size: 1,
+      norm_thresh: 0.9,
+      amp_thresh: 1.0,
+      single_stem: "(None)"
     });
 
     clearInterval(simInterval);
@@ -228,11 +234,15 @@ window.startProcessing = async function() {
 
     const getUrl = (i) => typeof i === 'string' ? i : (i?.url || (i?.path ? "https://thestinger-uvr5-ui.hf.space/file=" + i.path : ''));
     
-    // سحب الملفات برمجياً بدون توكن أو Authorization Header
-    const fetchFile = async (url) => {
+    // سحب الملفات الذكي: يرسل التوكن في الـ Headers فقط إذا كان موجوداً
+    const fetchAudio = async (url) => {
       if (!url) return '';
       try {
-        const res = await fetch(url);
+        let fetchOptions = {};
+        if (savedToken) {
+          fetchOptions = { headers: { "Authorization": `Bearer ${savedToken}` } };
+        }
+        const res = await fetch(url, fetchOptions);
         if (!res.ok) return ''; 
         const blob = await res.blob();
         return URL.createObjectURL(blob);
@@ -241,8 +251,8 @@ window.startProcessing = async function() {
       }
     };
 
-    const instBlob = await fetchFile(getUrl(result.data[0]));
-    const vocalBlob = await fetchFile(getUrl(result.data[1]));
+    const instBlob = await fetchAudio(getUrl(result.data[0]));
+    const vocalBlob = await fetchAudio(getUrl(result.data[1]));
 
     clearInterval(downloadInterval);
 
@@ -263,8 +273,8 @@ window.startProcessing = async function() {
   } catch (err) {
     clearInterval(simInterval);
     console.error(err);
-    // رسالة تنبيه واضحة للمستخدم بتشغيل كاسر بروكسي عند الحظر المؤقت
-    showToast('فشل الاتصال! يبدو أنك استنفذت المحاولات المجانية، شغل VPN وجرب مجدداً.', 'error');
+    // رسالة الخطأ أصبحت عامة لتناسب حالتي (بتوكن وبدون توكن)
+    showToast('حدث خطأ! تأكد من التوكن، أو إذا كنت بلا توكن فشغل VPN.', 'error');
     document.getElementById('processBtn').disabled = false;
     document.getElementById('progressSection').classList.remove('show');
   }
@@ -333,6 +343,16 @@ window.clearHistory = function() {
   loadHistory();
   showToast('تم مسح السجل بنجاح', 'success');
 }
+
+window.saveSettings = function() {
+  const token = document.getElementById('hf_token_input').value;
+  if (token) {
+    localStorage.setItem('hf_token', token.trim());
+  }
+  showToast('✅ تم حفظ الإعدادات', 'success');
+}
+
+document.getElementById('hf_token_input').value = localStorage.getItem('hf_token') || '';
 
 loadHistory();
 showToast('👋 مرحباً بك في Voice Studio', 'success');
