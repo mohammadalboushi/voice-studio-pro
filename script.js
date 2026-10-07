@@ -246,7 +246,7 @@ window.startProcessing = async function() {
       }
     }, 800);
 
-    const getUrl = (i) => typeof i === 'string' ? i : (i?.url || (i?.path ? "https://thestinger-uvr5-ui.hf.space/file=" + i.path : ''));
+    const getUrl = (i) => typeof i === 'string' ? i : (i?.url || (i?.path ? "https://itsalboushi-uvr5-ui.hf.space/file=" + i.path : ''));
     
     // سحب الملفات الذكي
     const fetchAudio = async (url) => {
