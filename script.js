@@ -209,7 +209,7 @@ window.startProcessing = async function() {
   try {
         // الاتصال الذكي: إذا كان لديك توكن سيستخدمه، وإذا لم يكن موجوداً سيتصل مجاناً للزوار
     let clientConfig = savedToken ? { token: savedToken, hf_token: savedToken } : {};
-    const client = await Client.connect("TheStinger/UVR5_UI", clientConfig);
+    const client = await Client.connect("itsalboushi/UVR5_UI", clientConfig);
     
     // الحل الجذري: تحديد اسم النموذج يدوياً بناءً على الخيار المحدد بدلاً من قراءة النص من الواجهة
     let safeModelName = "1_HP-UVR.pth"; // الافتراضي: موسيقى فقط
