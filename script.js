@@ -344,12 +344,36 @@ window.clearHistory = function() {
   showToast('تم مسح السجل بنجاح', 'success');
 }
 
-window.saveSettings = function() {
-  const token = document.getElementById('hf_token_input').value;
-  if (token) {
-    localStorage.setItem('hf_token', token.trim());
+window.saveSettings = async function() {
+  const token = document.getElementById('hf_token_input').value.trim();
+  
+  if (!token) {
+    localStorage.removeItem('hf_token');
+    showToast('تم مسح التوكن المحفوظ لتعمل بالوضع المجاني', 'success');
+    return;
   }
-  showToast('✅ تم حفظ الإعدادات', 'success');
+
+  if (!token.startsWith('hf_')) {
+    showToast('❌ التوكن غير صالح! يجب أن يبدأ بـ hf_', 'error');
+    return;
+  }
+
+  showToast('جاري التحقق من التوكن...', 'warning');
+  
+  try {
+    const res = await fetch('https://huggingface.co/api/whoami-v2', {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+
+    if (res.ok) {
+      localStorage.setItem('hf_token', token);
+      showToast('✅ التوكن حقيقي وشغال! تم الحفظ بنجاح', 'success');
+    } else {
+      showToast('❌ التوكن خاطئ أو منتهي الصلاحية!', 'error');
+    }
+  } catch (e) {
+    showToast('⚠️ حدث خطأ أثناء الاتصال للتحقق', 'error');
+  }
 }
 
 document.getElementById('hf_token_input').value = localStorage.getItem('hf_token') || '';
