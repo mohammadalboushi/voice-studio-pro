@@ -179,7 +179,9 @@ window.downloadAudio = function(id, name) {
 window.startProcessing = async function() {
   if (!currentFile) return showToast('اختر ملف صوتي أولاً', 'warning');
   
-  const savedToken = localStorage.getItem('hf_token');
+  const isTokenActive = localStorage.getItem('hf_token_active') !== 'false';
+  const rawToken = localStorage.getItem('hf_token');
+  const savedToken = (isTokenActive && rawToken) ? rawToken : null;
 
   if (savedToken) {
     showToast('🚀 جاري المعالجة باستخدام التوكن (السرعة القصوى)', 'success');
@@ -211,7 +213,7 @@ window.startProcessing = async function() {
     
     const result = await client.predict("/vrarch_separator", {
       audio: currentFile,
-      model: document.getElementById('cfg_model') ? document.getElementById('cfg_model').value : "5_HP-Karaoke-UVR.pth",
+      model: document.getElementById('cfg_model') ? document.getElementById('cfg_model').value.replace(/[\u200B-\u200D\uFEFF]/g, '').trim() : "1_HP-UVR.pth",
       out_format: "wav",
       window_size: parseInt(document.getElementById('cfg_window').value),
       aggression: parseInt(document.getElementById('cfg_agg').value),
@@ -263,6 +265,16 @@ window.startProcessing = async function() {
 
     document.getElementById('instAudio').src = instBlob;
     document.getElementById('vocalAudio').src = vocalBlob;
+
+    // إخفاء بطاقة المطرب إذا كانت فارغة أو إذا تم اختيار نموذج الموسيقى فقط
+    const vocalCard = document.querySelector('.result-item.vocal');
+    const selectedModel = document.getElementById('cfg_model') ? document.getElementById('cfg_model').value : '';
+
+    if (!vocalBlob || selectedModel.includes('1_HP-UVR')) {
+      vocalCard.style.display = 'none';
+    } else {
+      vocalCard.style.display = 'block';
+    }
 
     updateProcessing(100);
     document.getElementById('progressStatus').innerText = 'تمت المعالجة بنجاح!';
@@ -386,6 +398,59 @@ window.saveSettings = async function() {
 }
 
 document.getElementById('hf_token_input').value = localStorage.getItem('hf_token') || '';
+
+window.toggleTokenStatus = function() {
+  const isCurrentActive = localStorage.getItem('hf_token_active') !== 'false';
+  const newActiveState = !isCurrentActive;
+  
+  localStorage.setItem('hf_token_active', newActiveState ? 'true' : 'false');
+  updateTokenLockUI(newActiveState);
+
+  if (newActiveState) {
+    showToast('🔓 تم تفعيل التوكن (السرعة القصوى)', 'success');
+  } else {
+    showToast('🔒 تم تجميد التوكن! ستعمل الآن بالخطة المجانية', 'warning');
+  }
+};
+
+function updateTokenLockUI(isActive) {
+  const btn = document.getElementById('tokenToggleBtn');
+  const icon = document.getElementById('tokenLockIcon');
+  const input = document.getElementById('hf_token_input');
+  const statusText = document.getElementById('tokenStatusText');
+
+  if (!btn || !icon) return;
+
+  if (isActive) {
+    icon.className = 'fas fa-lock-open';
+    icon.style.color = '#10b981';
+    btn.style.borderColor = '#10b981';
+    btn.style.background = '#ecfdf5';
+    if (input) {
+      input.style.opacity = '1';
+      input.style.backgroundColor = '#ffffff';
+    }
+    if (statusText) {
+      statusText.style.color = '#10b981';
+      statusText.innerHTML = '⚡ التوكن نشط (السرعة القصوى)';
+    }
+  } else {
+    icon.className = 'fas fa-lock';
+    icon.style.color = '#94a3b8';
+    btn.style.borderColor = '#cbd5e1';
+    btn.style.background = '#f1f5f9';
+    if (input) {
+      input.style.opacity = '0.6';
+      input.style.backgroundColor = '#f8fafc';
+    }
+    if (statusText) {
+      statusText.style.color = '#64748b';
+      statusText.innerHTML = '🔒 التوكن مجمد مؤقتاً (يعمل بالخطة المجانية)';
+    }
+  }
+}
+
+updateTokenLockUI(localStorage.getItem('hf_token_active') !== 'false');
 
 loadHistory();
 showToast('👋 مرحباً بك في Voice Studio', 'success');

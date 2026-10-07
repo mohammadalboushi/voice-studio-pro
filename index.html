@@ -40,7 +40,7 @@
     <div class="navbar-container">
       <div class="logo">
         <i class="fas fa-music"></i>
-        Voice Studio AI <span style="font-size: 0.75rem; background: var(--primary); padding: 2px 8px; border-radius: 12px; margin-right: 10px; color: white; -webkit-text-fill-color: white; font-weight: bold; border: none;">v1.3</span>
+        Voice Studio AI <span style="font-size: 0.75rem; background: var(--primary); padding: 2px 8px; border-radius: 12px; margin-right: 10px; color: white; -webkit-text-fill-color: white; font-weight: bold; border: none;">v1.5</span>
       </div>
             <div class="nav-links">
         <a href="#" class="nav-link" onclick="showPage('home'); return false;">الرئيسية</a>
@@ -112,9 +112,9 @@
             <div class="setting-group" style="grid-column: 1 / -1;">
               <label class="setting-label">نوع الاستخراج (النموذج)</label>
               <select id="cfg_model" class="setting-select">
-                <option value="6_HP-Karaoke-UVR.pth">موسيقى وكورال (عزل المطرب الأساسي فقط)</option>
-                <option value="5_HP-Karaoke-UVR.pth">موسيقى فقط (موسيقى صافية بدون أي أصوات أو كورال)</option>
-              </select>
+  <option value="6_HP-Karaoke-UVR.pth">موسيقى وكورال (عزل المطرب الأساسي فقط)</option>
+  <option value="1_HP-UVR.pth" selected>موسيقى فقط (موسيقى صافية بدون أي أصوات أو كورال)</option>
+</select>
             </div>
             <div class="setting-group">
               <label class="setting-label">دقة المعالجة</label>
@@ -262,10 +262,14 @@
           
           <div class="setting-group" style="margin-bottom: 1.5rem;">
             <label class="setting-label">Hugging Face Token (مفتاح الربط)</label>
-            <input type="password" id="hf_token_input" class="setting-input" placeholder="hf_..." style="width: 100%;">
-            <small style="color: var(--text-light); margin-top: 0.5rem; display: block;">سيتم حفظ المفتاح في متصفحك فقط بشكل آمن.</small>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <input type="password" id="hf_token_input" class="setting-input" placeholder="hf_..." style="flex: 1;">
+              <button type="button" id="tokenToggleBtn" onclick="toggleTokenStatus()" title="تفعيل أو تجميد التوكن" style="padding: 0.75rem 1.1rem; border-radius: 10px; border: 2px solid var(--border-color); background: white; cursor: pointer; transition: all 0.3s; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-lock-open" id="tokenLockIcon" style="color: #10b981;"></i>
+              </button>
+            </div>
+            <small id="tokenStatusText" style="margin-top: 0.5rem; display: block; font-weight: 600;">الحالة: التوكن نشط (السرعة القصوى)</small>
           </div>
-
           <button class="btn btn-primary" onclick="saveSettings()">
             <i class="fas fa-save"></i> حفظ الإعدادات
           </button>
@@ -280,7 +284,7 @@
 
 
 
-    <script type="module" src="script.js?v=6.1"></script>
+    <script type="module" src="script.js?v=8.1"></script>
 
 
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(r=>{for(let i of r)i.unregister();});}</script></body></html>
