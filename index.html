@@ -40,7 +40,7 @@
     <div class="navbar-container">
       <div class="logo">
         <i class="fas fa-music"></i>
-        Voice Studio AI <span style="font-size: 0.75rem; background: var(--primary); padding: 2px 8px; border-radius: 12px; margin-right: 10px; color: white; -webkit-text-fill-color: white; font-weight: bold; border: none;">v1.2</span>
+        Voice Studio AI <span style="font-size: 0.75rem; background: var(--primary); padding: 2px 8px; border-radius: 12px; margin-right: 10px; color: white; -webkit-text-fill-color: white; font-weight: bold; border: none;">v1.1</span>
       </div>
             <div class="nav-links">
         <a href="#" class="nav-link" onclick="showPage('home'); return false;">الرئيسية</a>
@@ -112,9 +112,9 @@
             <div class="setting-group" style="grid-column: 1 / -1;">
               <label class="setting-label">نوع الاستخراج (النموذج)</label>
               <select id="cfg_model" class="setting-select">
-                <option value="6_HP-Karaoke-UVR.pth">موسيقى وكورال (عزل المطرب الأساسي فقط)</option>
-                <option value="UVR-MDX-NET-Voc_FT">موسيقى فقط (عزل جميع الأصوات البشرية)</option>
-              </select>
+  <option value="6_HP-Karaoke-UVR.pth">موسيقى وكورال (عزل المطرب الأساسي فقط)</option>
+  <option value="2_HP-UVR.pth">موسيقى فقط (موسيقى صافية بدون كورال)</option>
+</select>
             </div>
             <div class="setting-group">
               <label class="setting-label">دقة المعالجة</label>
@@ -280,7 +280,7 @@
 
 
 
-    <script type="module" src="script.js?v=4.1"></script>
+    <script type="module" src="script.js?v=5.1"></script>
 
 
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(r=>{for(let i of r)i.unregister();});}</script></body></html>
