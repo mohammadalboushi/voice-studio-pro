@@ -180,12 +180,17 @@ window.startProcessing = async function() {
   if (!currentFile) return showToast('اختر ملف صوتي أولاً', 'warning');
   
   const savedToken = localStorage.getItem('hf_token');
-  // تم إزالة شرط الإيقاف هنا، الكود سيكمل عمله للجميع (بتوكن أو بدون)
+
+  if (savedToken) {
+    showToast('🚀 جاري المعالجة باستخدام التوكن (السرعة القصوى)', 'success');
+  } else {
+    showToast('⏳ جاري المعالجة بالخطة المجانية (قد يستغرق وقتاً أطول)', 'warning');
+  }
 
   document.getElementById('processBtn').disabled = true;
   document.getElementById('progressSection').classList.add('show');
   document.getElementById('resultsSection').classList.remove('show');
-  document.getElementById('progressStatus').innerText = 'جاري الاتصال ورفع الملف...';
+  document.getElementById('progressStatus').innerText = savedToken ? 'جاري الاتصال السريع عبر التوكن...' : 'جاري الاتصال السحابي بالخطة المجانية...';
 
   let p = 0;
   let simInterval = setInterval(() => {
