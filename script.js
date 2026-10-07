@@ -208,8 +208,15 @@ window.startProcessing = async function() {
 
   try {
         // الاتصال الذكي: إذا كان لديك توكن سيستخدمه، وإذا لم يكن موجوداً سيتصل مجاناً للزوار
-    let clientConfig = savedToken ? { token: savedToken, hf_token: savedToken } : {};
-    const client = await Client.connect("itsalboushi/UVR5_UI", clientConfig);
+    let spaceName = "TheStinger/UVR5_UI"; // المساحة العامة للزوار (الحصة عالـ IP)
+    let clientConfig = {};
+
+    if (savedToken) {
+      spaceName = "itsalboushi/UVR5_UI"; // مساحتك الخاصة (VIP)
+      clientConfig = { token: savedToken, hf_token: savedToken };
+    }
+
+    const client = await Client.connect(spaceName, clientConfig);
     
     // الحل الجذري: تحديد اسم النموذج يدوياً بناءً على الخيار المحدد بدلاً من قراءة النص من الواجهة
     let safeModelName = "1_HP-UVR.pth"; // الافتراضي: موسيقى فقط
@@ -246,7 +253,10 @@ window.startProcessing = async function() {
       }
     }, 800);
 
-    const getUrl = (i) => typeof i === 'string' ? i : (i?.url || (i?.path ? "https://itsalboushi-uvr5-ui.hf.space/file=" + i.path : ''));
+    const getUrl = (i) => {
+      const baseUrl = savedToken ? "https://itsalboushi-uvr5-ui.hf.space" : "https://thestinger-uvr5-ui.hf.space";
+      return typeof i === 'string' ? i : (i?.url || (i?.path ? baseUrl + "/file=" + i.path : ''));
+    };
     
     // سحب الملفات الذكي
     const fetchAudio = async (url) => {
