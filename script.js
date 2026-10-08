@@ -15,7 +15,13 @@ window.showToast = function(message, type = 'success') {
     error: 'fa-times-circle',
     warning: 'fa-exclamation-circle'
   };
-  const container = document.getElementById('toastContainer');
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
   toast.innerHTML = `<i class="fas ${icons[type]}"></i><span>${message}</span>`;
@@ -126,34 +132,130 @@ function showFileInfo() {
   drawWaveform(currentFile);
 }
 
-window.togglePlay = function(audioId, button) {
-  const audio = document.getElementById(audioId);
-  const icon = button.querySelector('i');
+// ====== MODAL PLAYER LOGIC ======
+let activeAudio = null;
+let activeType = null; // 'vocal' or 'inst'
+let progressInterval = null;
 
-  if (audio.paused) {
-    audio.play();
-    icon.className = 'fas fa-pause';
+window.openPlayer = function(type) {
+  activeType = type;
+  const audioId = type === 'vocal' ? 'vocalAudio' : 'instAudio';
+  activeAudio = document.getElementById(audioId);
+
+  if (!activeAudio.src || activeAudio.src === window.location.href) {
+    showToast('الصوت غير متوفر أو لم يتم معالجته بعد', 'warning');
+    return;
+  }
+
+  // Setup Modal UI
+  document.getElementById('playerTitle').innerText = type === 'vocal' ? 'صوت المطرب' : 'الموسيقى الخلفية';
+  document.getElementById('trackName').innerText = type === 'vocal' ? 'المسار الصوتي' : 'المسار الموسيقي';
+  document.getElementById('trackFileName').innerText = currentFile ? currentFile.name : 'Unknown.mp3';
+  
+  const artwork = document.getElementById('playerArtwork');
+  const icon = document.getElementById('playerArtworkIcon');
+  
+  artwork.className = 'player-artwork'; // Reset classes
+  if (type === 'vocal') {
+    artwork.classList.add('vocal-theme');
+    icon.className = 'fas fa-microphone-alt';
   } else {
-    audio.pause();
+    artwork.classList.add('inst-theme');
+    icon.className = 'fas fa-guitar';
+  }
+
+  // Initial time setup
+  document.getElementById('modalSeek').value = activeAudio.currentTime ? (activeAudio.currentTime / activeAudio.duration) * 100 : 0;
+  document.getElementById('modalCurrentTime').innerText = formatTime(activeAudio.currentTime || 0);
+  document.getElementById('modalTotalTime').innerText = formatTime(activeAudio.duration || 0);
+
+  // Sync Play/Pause Icon
+  syncPlayPauseIcon();
+
+  // Open Modal
+  document.getElementById('playerModal').classList.add('open');
+  
+  // حفظ حالة في السجل لزر الرجوع
+  history.pushState({ modalOpen: true }, '', '#player');
+
+  // Start progress updater
+  if(progressInterval) clearInterval(progressInterval);
+  progressInterval = setInterval(updateModalProgress, 100);
+}
+
+window.closePlayer = function() {
+  if (window.location.hash === '#player') {
+    history.back(); // هذا سيفعل حدث popstate أدناه والذي سيغلق المشغل
+  } else {
+    document.getElementById('playerModal').classList.remove('open');
+    if(progressInterval) clearInterval(progressInterval);
+  }
+}
+
+// التقاط حدث زر الرجوع في الهاتف
+window.addEventListener('popstate', function(event) {
+  const modal = document.getElementById('playerModal');
+  if (modal && modal.classList.contains('open')) {
+    modal.classList.remove('open');
+    if (progressInterval) clearInterval(progressInterval);
+  }
+});
+
+window.toggleModalPlay = function() {
+  if (!activeAudio) return;
+  if (activeAudio.paused) {
+    activeAudio.play();
+  } else {
+    activeAudio.pause();
+  }
+  syncPlayPauseIcon();
+}
+
+function syncPlayPauseIcon() {
+  if (!activeAudio) return;
+  const icon = document.querySelector('#modalPlayBtn i');
+  const artwork = document.getElementById('playerArtwork');
+  
+  if (activeAudio.paused) {
     icon.className = 'fas fa-play';
+    artwork.classList.remove('playing');
+  } else {
+    icon.className = 'fas fa-pause';
+    artwork.classList.add('playing');
   }
 }
 
-window.seekAudio = function(id, val) {
-  const audio = document.getElementById(id);
-  if (audio.duration) audio.currentTime = (val / 100) * audio.duration;
-}
-
-window.updateProgress = function(id, seekId, currentId) {
-  const audio = document.getElementById(id);
-  if (audio.duration) {
-    document.getElementById(seekId).value = (audio.currentTime / audio.duration) * 100;
-    document.getElementById(currentId).innerText = formatTime(audio.currentTime);
+window.seekModalAudio = function(val) {
+  if (activeAudio && activeAudio.duration) {
+    activeAudio.currentTime = (val / 100) * activeAudio.duration;
+    document.getElementById('modalCurrentTime').innerText = formatTime(activeAudio.currentTime);
   }
 }
 
-window.setDuration = function(id, displayId) {
-  document.getElementById(displayId).innerText = formatTime(document.getElementById(id).duration);
+window.seekRelative = function(seconds) {
+  if (activeAudio && activeAudio.duration) {
+    let newTime = activeAudio.currentTime + seconds;
+    if(newTime < 0) newTime = 0;
+    if(newTime > activeAudio.duration) newTime = activeAudio.duration;
+    activeAudio.currentTime = newTime;
+  }
+}
+
+function updateModalProgress() {
+  if (activeAudio && activeAudio.duration) {
+    document.getElementById('modalSeek').value = (activeAudio.currentTime / activeAudio.duration) * 100;
+    document.getElementById('modalCurrentTime').innerText = formatTime(activeAudio.currentTime);
+    
+    // Auto sync icon if ended naturally
+    if (activeAudio.ended) syncPlayPauseIcon();
+  }
+}
+
+window.downloadCurrentAudio = function() {
+  if (!activeType) return;
+  const fileName = activeType === 'vocal' ? 'Vocals.wav' : 'Instrumental.wav';
+  const audioId = activeType === 'vocal' ? 'vocalAudio' : 'instAudio';
+  downloadAudio(audioId, fileName);
 }
 
 window.formatTime = function(sec) {
@@ -218,11 +320,11 @@ window.startProcessing = async function() {
 
     const client = await Client.connect(spaceName, clientConfig);
     
-    // الحل الجذري: تحديد اسم النموذج يدوياً بناءً على الخيار المحدد بدلاً من قراءة النص من الواجهة
-    let safeModelName = "1_HP-UVR.pth"; // الافتراضي: موسيقى فقط
-    const modelSelect = document.getElementById('cfg_model');
-    if (modelSelect && modelSelect.selectedIndex === 0) {
-      safeModelName = "6_HP-Karaoke-UVR.pth"; // موسيقى وكورال
+    // الحل الجذري: قراءة اسم النموذج من الأزرار الجديدة (الراديو)
+    let safeModelName = "6_HP-Karaoke-UVR.pth"; // الافتراضي الجديد: موسيقى وكورال
+    const selectedModelRadio = document.querySelector('input[name="model_choice"]:checked');
+    if (selectedModelRadio) {
+      safeModelName = selectedModelRadio.value;
     }
 
     const result = await client.predict("/vrarch_separator", {
@@ -275,8 +377,10 @@ window.startProcessing = async function() {
       }
     };
 
-    const instBlob = await fetchAudio(getUrl(result.data[0]));
-    const vocalBlob = await fetchAudio(getUrl(result.data[1]));
+    const rawInstUrl = getUrl(result.data[0]);
+    const rawVocalUrl = getUrl(result.data[1]);
+    const instBlob = await fetchAudio(rawInstUrl);
+    const vocalBlob = await fetchAudio(rawVocalUrl);
 
     clearInterval(downloadInterval);
 
@@ -284,17 +388,18 @@ window.startProcessing = async function() {
     document.getElementById('vocalAudio').src = vocalBlob;
 
     // إخفاء بطاقة المطرب بالاعتماد على الاسم الآمن
-    const vocalCard = document.querySelector('.result-item.vocal');
+    const vocalCard = document.getElementById('vocalCard');
     if (!vocalBlob || safeModelName.includes('1_HP-UVR')) {
       vocalCard.style.display = 'none';
     } else {
-      vocalCard.style.display = 'block';
+      vocalCard.style.display = 'flex';
     }
 
     updateProcessing(100);
     document.getElementById('progressStatus').innerText = 'تمت المعالجة بنجاح!';
 
-    saveToHistory(currentFile.name);
+    // حفظ الروابط مع اسم الملف
+    saveToHistory(currentFile.name, rawInstUrl, rawVocalUrl);
 
     setTimeout(() => {
       document.getElementById('progressSection').classList.remove('show');
@@ -356,10 +461,12 @@ function updateProcessing(percent) {
   });
 }
 
-window.saveToHistory = function(name) {
+window.saveToHistory = function(name, instUrl, vocalUrl) {
   let history = JSON.parse(localStorage.getItem('voiceHistory') || '[]');
   history.unshift({
     name,
+    instUrl: instUrl || '',
+    vocalUrl: vocalUrl || '',
     date: new Date().toLocaleString('ar-SA')
   });
   localStorage.setItem('voiceHistory', JSON.stringify(history.slice(0, 30)));
@@ -373,7 +480,29 @@ window.loadHistory = function() {
     list.innerHTML = '<p style="text-align: center; color: #94a3b8; padding: 2rem;">لا توجد معالجات سابقة</p>';
     return;
   }
-  list.innerHTML = history.map(h => `<div style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 0.75rem;"><strong>${h.name}</strong><br><small style="color: #94a3b8;">${h.date}</small></div>`).join('');
+  
+  // تحديث التنبيه ليتناسب مع الميزة الجديدة
+  const warningBanner = `
+    <div style="background: #e0f2fe; border-right: 4px solid #0284c7; padding: 0.8rem; margin-bottom: 1.2rem; border-radius: 8px; font-size: 0.85rem; color: #075985; display: flex; gap: 0.6rem; align-items: flex-start; line-height: 1.5;">
+      <i class="fas fa-info-circle" style="margin-top: 0.2rem; font-size: 1rem;"></i>
+      <span><strong>ملاحظة:</strong> يمكنك استرجاع وتشغيل المقاطع التي قمت بمعالجتها مؤخراً. الروابط تبقى فعالة لفترة مؤقتة (بضع ساعات) قبل أن يحذفها السيرفر تلقائياً.</span>
+    </div>
+  `;
+
+  // إضافة أمر التشغيل (onclick) وأيقونة الـ Play
+  const historyItems = history.map((h, index) => `
+    <div onclick="restoreFromHistory(${index})" style="padding: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; background: #f8fafc; transition: all 0.2s;">
+      <div style="overflow: hidden;">
+        <strong style="color: #334155; font-size: 0.95rem; display: block; margin-bottom: 0.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${h.name}</strong>
+        <small style="color: #94a3b8; font-weight: 600;"><i class="fas fa-calendar-alt"></i> ${h.date}</small>
+      </div>
+      <div style="background: #4f46e5; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0;">
+        <i class="fas fa-play" style="margin-left: 2px;"></i>
+      </div>
+    </div>
+  `).join('');
+
+  list.innerHTML = warningBanner + historyItems;
 }
 
 window.clearHistory = function() {
@@ -471,3 +600,58 @@ updateTokenLockUI(localStorage.getItem('hf_token_active') !== 'false');
 
 loadHistory();
 showToast('👋 مرحباً بك في Voice Studio', 'success');
+
+// دالة استرجاع الملفات من السجل
+window.restoreFromHistory = async function(index) {
+  const history = JSON.parse(localStorage.getItem('voiceHistory') || '[]');
+  const item = history[index];
+  
+  if (!item || (!item.instUrl && !item.vocalUrl)) {
+    showToast('⚠️ لا توجد روابط محفوظة لهذا الملف (ملف قديم تم معالجته قبل التحديث)', 'warning');
+    return;
+  }
+
+  showToast('جاري استرجاع الملفات من السيرفر...', 'success');
+  
+  // الانتقال للاستوديو وإظهار الواجهة
+  showPage('home');
+  document.getElementById('fileName').innerText = item.name;
+  document.getElementById('fileInfo').classList.add('show');
+  
+  const isTokenActive = localStorage.getItem('hf_token_active') !== 'false';
+  const savedToken = (isTokenActive) ? localStorage.getItem('hf_token') : null;
+  
+  const fetchAudioGlobal = async (url) => {
+    if (!url) return '';
+    try {
+      let fetchOptions = {};
+      if (savedToken) fetchOptions = { headers: { "Authorization": `Bearer ${savedToken}` } };
+      const res = await fetch(url, fetchOptions);
+      if (!res.ok) throw new Error('Expired');
+      const blob = await res.blob();
+      return URL.createObjectURL(blob);
+    } catch (e) {
+      return null; // الرابط منتهي الصلاحية
+    }
+  };
+
+  const instBlob = await fetchAudioGlobal(item.instUrl);
+  const vocalBlob = item.vocalUrl ? await fetchAudioGlobal(item.vocalUrl) : '';
+
+  if (!instBlob) {
+    showToast('❌ انتهت صلاحية هذا الرابط وتم حذفه من السيرفر، يرجى إعادة المعالجة.', 'error');
+    return;
+  }
+
+  document.getElementById('instAudio').src = instBlob;
+  if (vocalBlob) {
+    document.getElementById('vocalAudio').src = vocalBlob;
+    document.getElementById('vocalCard').style.display = 'flex';
+  } else {
+    document.getElementById('vocalCard').style.display = 'none';
+  }
+  
+  currentFile = { name: item.name }; 
+  document.getElementById('resultsSection').classList.add('show');
+  showToast('✨ تم الاسترجاع بنجاح!', 'success');
+}

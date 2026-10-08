@@ -35,117 +35,109 @@
 </head>
 
 <body>
-  <!-- NAVBAR -->
-  <nav class="navbar">
-    <div class="navbar-container">
-      <div class="logo">
-        <i class="fas fa-music"></i>
-        Voice Studio AI <span style="font-size: 0.75rem; background: var(--primary); padding: 2px 8px; border-radius: 12px; margin-right: 10px; color: white; -webkit-text-fill-color: white; font-weight: bold; border: none;">v1.1</span>
-      </div>
-            <div class="nav-links">
-        <a href="#" class="nav-link" onclick="showPage('home'); return false;">الرئيسية</a>
-        <a href="#" class="nav-link" onclick="showPage('history'); return false;">السجل</a>
-        <a href="#" class="nav-link" onclick="showPage('settings'); return false;">الإعدادات</a>
-      </div>
+  <!-- TOP HEADER (CLEAN LOGO ONLY) -->
+  <header class="app-header">
+    <div class="logo">
+      <i class="fas fa-music"></i>
+      Voice Studio Pro
+      <span class="version-badge">v1.5</span>
     </div>
-  </nav>
+  </header>
 
-  <!-- HOME PAGE -->
-  <div id="home" class="page active">
-    <div class="container">
-
-      <!-- PROFILE SECTION ADDED HERE -->
-      <div class="profile-wrapper">
-        <img src="https://midomido.neocities.org/Imageme/file_00000000b0e471f4bb14b679b943d519.png" alt="MohaMmAD_WaSSouF Profile" class="profile-avatar">
-        <h2 class="profile-name">MohaMmAD_WaSSouF</h2>
-        <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 5px; font-weight: 600;">النسخة الاحترافية المخصصة</p>
+  <!-- MAIN APP CONTAINER -->
+  <main class="app-main">
+    
+    <!-- HOME PAGE -->
+    <div id="home" class="page active">
+      
+      <!-- COMPACT PROFILE -->
+      <div class="profile-compact">
+        <img src="https://midomido.neocities.org/Imageme/file_00000000b0e471f4bb14b679b943d519.png" alt="Profile" class="profile-avatar">
+        <div class="profile-info">
+          <h2>MohaMmAD_WaSSouF</h2>
+          <p>النسخة الاحترافية المخصصة</p>
+        </div>
       </div>
 
-      <div class="header-section">
-        <h1>فصل <span class="gradient-text">احترافي</span> للصوت</h1>
-        <p>إفصل صوت المطرب عن الموسيقى باستخدام تقنيات الذكاء الاصطناعي المتقدمة</p>
-      </div>
-
-      <div class="main-card">
+      <!-- MAIN STUDIO CARD -->
+      <div class="studio-card">
+        
         <div class="upload-area" id="uploadArea" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" onclick="document.getElementById('audioFile').click()">
           <div class="upload-icon">
             <i class="fas fa-cloud-arrow-up"></i>
           </div>
-          <h2 class="upload-title">اسحب أغنيتك هنا</h2>
-          <p class="upload-desc">أو انقر لاختيار ملف صوتي من جهازك</p>
-          <p style="color: #94a3b8; font-size: 0.9rem;">MP3 • WAV • FLAC • OGG (حد أقصى 500MB)</p>
+          <h2 class="upload-title">اختر أو اسحب ملفاً صوتياً</h2>
+          <p class="upload-desc">يدعم MP3, WAV, FLAC</p>
         </div>
-
         <input type="file" id="audioFile" accept="audio/*" onchange="handleFileSelect(event)">
 
+        <!-- FILE INFO COMPACT -->
         <div class="file-info-section" id="fileInfo">
-          <div class="file-details">
-            <div class="detail-box">
-              <div class="detail-label">اسم الملف</div>
-              <div class="detail-value" id="fileName">-</div>
+          <div class="file-details-compact">
+            <div class="compact-detail">
+              <i class="fas fa-file-audio"></i> <span id="fileName">-</span>
             </div>
-            <div class="detail-box">
-              <div class="detail-label">الحجم</div>
-              <div class="detail-value" id="fileSize">-</div>
+            <div class="compact-detail">
+              <i class="fas fa-weight-hanging"></i> <span id="fileSize">-</span>
             </div>
-            <div class="detail-box">
-              <div class="detail-label">المدة</div>
-              <div class="detail-value" id="fileDuration">-</div>
-            </div>
-            <div class="detail-box">
-              <div class="detail-label">الجودة</div>
-              <div class="detail-value">320 kbps</div>
+            <div class="compact-detail">
+              <i class="fas fa-clock"></i> <span id="fileDuration">-</span>
             </div>
           </div>
         </div>
 
+        <!-- WAVEFORM -->
         <div class="waveform-section" id="waveformSection">
-          <div class="waveform-title">🎵 معاينة موجة الصوت</div>
           <canvas id="waveformCanvas"></canvas>
         </div>
 
+        <!-- SETTINGS (COMPACT ACCORDION STYLE) -->
         <div class="settings-section" id="settingsSection">
-          <div class="settings-title">
-            <i class="fas fa-sliders"></i> إعدادات المعالجة
-          </div>
-                    <div class="settings-grid">
-            <div class="setting-group" style="grid-column: 1 / -1;">
-              <label class="setting-label">نوع الاستخراج (النموذج)</label>
-                            <select id="cfg_model" class="setting-select">
-  <option value="6_HP-Karaoke-UVR.pth">Instrumental & Chorus (Remove Lead Vocal)</option>
-  <option value="1_HP-UVR.pth" selected>Instrumental Only (Pure Music)</option>
-</select>
+          <h3 class="section-heading"><i class="fas fa-sliders-h"></i> خيارات المعالجة</h3>
+          
+          <div class="setting-group">
+            <label class="setting-label">نموذج العزل</label>
+            <div class="model-toggle-container">
+              <input type="radio" id="model_karaoke" name="model_choice" value="6_HP-Karaoke-UVR.pth" checked>
+              <label class="model-toggle-btn" for="model_karaoke">موسيقى وكورال</label>
+              
+              <input type="radio" id="model_inst" name="model_choice" value="1_HP-UVR.pth">
+              <label class="model-toggle-btn" for="model_inst">موسيقى فقط</label>
             </div>
-            <div class="setting-group">
-              <label class="setting-label">دقة المعالجة</label>
+          </div>
+
+          <div class="setting-row">
+            <div class="setting-group half">
+              <label class="setting-label">الدقة</label>
               <select id="cfg_window" class="setting-select">
-                <option value="320">عادي - سريع</option>
-                <option value="512">متوازن - موصى به</option>
-                <option value="1024" selected="">عالي - الأفضل</option>
+                <option value="320">عادي</option>
+                <option value="512">متوازن</option>
+                <option value="1024" selected="">عالي</option>
               </select>
             </div>
-            <div class="setting-group">
-              <label class="setting-label">قوة العزل (1-10)</label>
-              <input type="range" id="cfg_agg" min="1" max="10" value="5" style="width: 100%;">
-              <small style="color: var(--text-light); margin-top: 0.5rem;">القيمة الحالية: <span id="aggValue">5</span></small>
+            <div class="setting-group half">
+              <label class="setting-label">القوة (<span id="aggValue">5</span>)</label>
+              <input type="range" id="cfg_agg" min="1" max="10" value="5" class="ios-slider">
             </div>
           </div>
-          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <label class="setting-checkbox">
+
+          <div class="ios-toggles-container">
+            <label class="ios-toggle-row">
+              <span class="toggle-text">تصفية التشويش والضوضاء</span>
               <input type="checkbox" id="cfg_post" checked="">
-              <span>تصفية التشويش والضوضاء</span>
             </label>
-            <label class="setting-checkbox">
+            <label class="ios-toggle-row">
+              <span class="toggle-text">معالجة الترددات العالية</span>
               <input type="checkbox" id="cfg_high" checked="">
-              <span>معالجة الترددات العالية</span>
             </label>
-            <label class="setting-checkbox">
+            <label class="ios-toggle-row">
+              <span class="toggle-text">تحسين الذكاء الاصطناعي (TTA)</span>
               <input type="checkbox" id="cfg_tta">
-              <span>تحسين الذكاء الاصطناعي (TTA)</span>
             </label>
           </div>
         </div>
 
+        <!-- PROGRESS -->
         <div class="progress-section" id="progressSection">
           <div class="progress-header">
             <span class="progress-status" id="progressStatus">جاري المعالجة...</span>
@@ -154,137 +146,151 @@
           <div class="progress-bar">
             <div class="progress-fill" id="progressFill"></div>
           </div>
-          <div class="steps-container">
-            <div class="step" id="step1">
-              <div class="step-icon"><i class="fas fa-cloud-arrow-up"></i></div>
-              <div class="step-label">الرفع</div>
-            </div>
-            <div class="step" id="step2">
-              <div class="step-icon"><i class="fas fa-wand-magic-sparkles"></i></div>
-              <div class="step-label">التحليل</div>
-            </div>
-            <div class="step" id="step3">
-              <div class="step-icon"><i class="fas fa-sliders"></i></div>
-              <div class="step-label">المعالجة</div>
-            </div>
-            <div class="step" id="step4">
-              <div class="step-icon"><i class="fas fa-check"></i></div>
-              <div class="step-label">الإنهاء</div>
-            </div>
+          <div class="steps-compact">
+            <div class="step" id="step1"><i class="fas fa-upload"></i></div>
+            <div class="step-line"></div>
+            <div class="step" id="step2"><i class="fas fa-brain"></i></div>
+            <div class="step-line"></div>
+            <div class="step" id="step3"><i class="fas fa-cogs"></i></div>
+            <div class="step-line"></div>
+            <div class="step" id="step4"><i class="fas fa-check"></i></div>
           </div>
         </div>
 
+        <!-- RESULTS (MODERN CARDS) -->
         <div class="results-section" id="resultsSection">
-          <!-- Vocals -->
-          <div class="result-item vocal">
-            <div class="result-header">
-              <div class="result-icon vocal"><i class="fas fa-microphone"></i></div>
-              <div class="result-info">
-                <h3>صوت المطرب</h3>
-                <p>المسار الصوتي المعزول بنقاء عالي</p>
-              </div>
+          
+          <!-- Vocals Card -->
+          <div class="result-card vocal" id="vocalCard" onclick="openPlayer('vocal')">
+            <div class="result-icon-lg vocal-bg"><i class="fas fa-microphone-alt"></i></div>
+            <div class="result-card-info">
+              <h3>صوت المطرب</h3>
+              <p>اضغط للتشغيل أو التحميل</p>
             </div>
-            <div class="player-container">
-              <button class="play-btn" onclick="togglePlay('vocalAudio', this)">
-                <i class="fas fa-play"></i>
-              </button>
-              <div class="timeline-container">
-                <div class="time-display">
-                  <span id="vocalCurrent">0:00</span>
-                  <span id="vocalTotal">0:00</span>
-                </div>
-                <input type="range" class="timeline" id="vocalSeek" min="0" max="100" value="0" oninput="seekAudio('vocalAudio', this.value)">
-              </div>
-            </div>
-            <audio id="vocalAudio" ontimeupdate="updateProgress('vocalAudio', 'vocalSeek', 'vocalCurrent')" onloadedmetadata="setDuration('vocalAudio', 'vocalTotal')"></audio>
-            <button class="btn btn-secondary btn-sm" onclick="downloadAudio('vocalAudio', 'Vocals.wav')">
-              <i class="fas fa-download"></i> تحميل
-            </button>
+            <i class="fas fa-chevron-left arrow-icon"></i>
+            <audio id="vocalAudio" class="hidden-audio"></audio>
           </div>
 
-          <!-- Instrumental -->
-          <div class="result-item inst">
-            <div class="result-header">
-              <div class="result-icon inst"><i class="fas fa-music"></i></div>
-              <div class="result-info">
-                <h3>الموسيقى الخلفية</h3>
-                <p>المسار الموسيقي المعزول بشكل نظيف</p>
-              </div>
+          <!-- Instrumental Card -->
+          <div class="result-card inst" id="instCard" onclick="openPlayer('inst')">
+            <div class="result-icon-lg inst-bg"><i class="fas fa-guitar"></i></div>
+            <div class="result-card-info">
+              <h3>الموسيقى الخلفية</h3>
+              <p>اضغط للتشغيل أو التحميل</p>
             </div>
-            <div class="player-container">
-              <button class="play-btn" onclick="togglePlay('instAudio', this)">
-                <i class="fas fa-play"></i>
-              </button>
-              <div class="timeline-container">
-                <div class="time-display">
-                  <span id="instCurrent">0:00</span>
-                  <span id="instTotal">0:00</span>
-                </div>
-                <input type="range" class="timeline" id="instSeek" min="0" max="100" value="0" oninput="seekAudio('instAudio', this.value)">
-              </div>
-            </div>
-            <audio id="instAudio" ontimeupdate="updateProgress('instAudio', 'instSeek', 'instCurrent')" onloadedmetadata="setDuration('instAudio', 'instTotal')"></audio>
-            <button class="btn btn-secondary btn-sm" onclick="downloadAudio('instAudio', 'Instrumental.wav')">
-              <i class="fas fa-download"></i> تحميل
-            </button>
+            <i class="fas fa-chevron-left arrow-icon"></i>
+            <audio id="instAudio" class="hidden-audio"></audio>
           </div>
+
         </div>
 
-        <button class="btn btn-primary" id="processBtn" onclick="startProcessing()" style="margin-top: 2rem;">
+        <button class="btn-primary" id="processBtn" onclick="startProcessing()">
           <i class="fas fa-wand-magic-sparkles"></i> بدء المعالجة
         </button>
+
       </div>
     </div>
-  </div>
 
-  <!-- HISTORY PAGE -->
-  <div id="history" class="page">
-    <div class="container">
-      <h1 style="margin-bottom: 2rem;">📋 سجل المعالجات</h1>
-      <div class="main-card">
+    <!-- HISTORY PAGE -->
+    <div id="history" class="page">
+      <div class="studio-card">
+        <h3 class="section-heading"><i class="fas fa-history"></i> سجل المعالجات</h3>
         <div id="historyList"></div>
-        <button class="btn btn-secondary" onclick="clearHistory()" style="margin-top: 1rem;">
+        <button class="btn-secondary" onclick="clearHistory()" style="margin-top: 1.5rem;">
           <i class="fas fa-trash"></i> مسح السجل
         </button>
       </div>
     </div>
-  </div>
 
-  <!-- SETTINGS PAGE -->
-  <div id="settings" class="page">
-    <div class="container">
-      <h1 style="margin-bottom: 2rem;">⚙️ الإعدادات المتقدمة</h1>
-      <div class="main-card">
-        <div class="settings-section show">
-          <div class="settings-title">
-            <i class="fas fa-sliders"></i> إعدادات المحرك المتقدمة
+    <!-- SETTINGS PAGE -->
+    <div id="settings" class="page">
+      <div class="studio-card">
+        <h3 class="section-heading"><i class="fas fa-shield-alt"></i> إعدادات المحرك (VIP)</h3>
+        
+        <div class="setting-group">
+          <label class="setting-label">Hugging Face Token</label>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <input type="password" id="hf_token_input" class="setting-select" placeholder="hf_..." style="flex: 1;">
+            <button type="button" id="tokenToggleBtn" onclick="toggleTokenStatus()" class="lock-btn">
+              <i class="fas fa-lock-open" id="tokenLockIcon"></i>
+            </button>
           </div>
-          
-          <div class="setting-group" style="margin-bottom: 1.5rem;">
-            <label class="setting-label">Hugging Face Token (مفتاح الربط)</label>
-            <div style="display: flex; gap: 0.5rem; align-items: center;">
-              <input type="password" id="hf_token_input" class="setting-input" placeholder="hf_..." style="flex: 1;">
-              <button type="button" id="tokenToggleBtn" onclick="toggleTokenStatus()" title="تفعيل أو تجميد التوكن" style="padding: 0.75rem 1.1rem; border-radius: 10px; border: 2px solid var(--border-color); background: white; cursor: pointer; transition: all 0.3s; font-size: 1.2rem; display: flex; align-items: center; justify-content: center;">
-                <i class="fas fa-lock-open" id="tokenLockIcon" style="color: #10b981;"></i>
-              </button>
-            </div>
-            <small id="tokenStatusText" style="margin-top: 0.5rem; display: block; font-weight: 600;">الحالة: التوكن نشط (السرعة القصوى)</small>
-          </div>
-          <button class="btn btn-primary" onclick="saveSettings()">
-            <i class="fas fa-save"></i> حفظ الإعدادات
-          </button>
+          <small id="tokenStatusText" class="token-status">الحالة: التوكن نشط</small>
+        </div>
+        <button class="btn-primary" onclick="saveSettings()">
+          <i class="fas fa-save"></i> حفظ التوكن
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM NAVIGATION BAR (APP STYLE) -->
+  <nav class="bottom-nav">
+    <a href="#" class="nav-item" onclick="document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); this.classList.add('active'); showPage('home'); return false;">
+      <i class="fas fa-layer-group"></i>
+      <span>الاستوديو</span>
+    </a>
+    <a href="#" class="nav-item" onclick="document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); this.classList.add('active'); showPage('history'); return false;">
+      <i class="fas fa-clock"></i>
+      <span>السجل</span>
+    </a>
+    <a href="#" class="nav-item" onclick="document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active')); this.classList.add('active'); showPage('settings'); return false;">
+      <i class="fas fa-cog"></i>
+      <span>الإعدادات</span>
+    </a>
+  </nav>
+
+  <!-- FULL SCREEN PLAYER MODAL -->
+  <div class="player-modal" id="playerModal">
+    <div class="player-modal-content">
+      
+      <!-- Top Bar -->
+      <div class="player-top-bar">
+        <button class="close-player-btn" onclick="closePlayer()">
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div class="player-title" id="playerTitle">المشغل</div>
+        <button class="download-player-btn" id="modalDownloadBtn" onclick="downloadCurrentAudio()">
+          <i class="fas fa-cloud-arrow-down"></i>
+        </button>
+      </div>
+
+      <!-- Artwork / Cover -->
+      <div class="player-artwork-container">
+        <div class="player-artwork" id="playerArtwork">
+          <i class="fas fa-music" id="playerArtworkIcon"></i>
         </div>
       </div>
+
+      <!-- Track Info -->
+      <div class="player-track-info">
+        <h2 id="trackName">اسم المقطع</h2>
+        <p id="trackFileName">Original_File.mp3</p>
+      </div>
+
+      <!-- Timeline & Controls -->
+      <div class="player-controls-section">
+        <div class="timeline-container-lg">
+          <input type="range" class="timeline-lg" id="modalSeek" min="0" max="100" value="0" oninput="seekModalAudio(this.value)">
+          <div class="time-display-lg">
+            <span id="modalCurrentTime">0:00</span>
+            <span id="modalTotalTime">0:00</span>
+          </div>
+        </div>
+
+        <div class="main-controls">
+          <button class="control-btn" onclick="seekRelative(-10)"><i class="fas fa-backward-10"></i></button>
+          <button class="play-pause-btn-lg" id="modalPlayBtn" onclick="toggleModalPlay()">
+            <i class="fas fa-play"></i>
+          </button>
+          <button class="control-btn" onclick="seekRelative(10)"><i class="fas fa-forward-10"></i></button>
+        </div>
+      </div>
+
     </div>
   </div>
 
-    <!-- TOAST CONTAINER -->
-  <div class="toast-container" id="toastContainer"></div>
-
-
-
-
-    <script type="module" src="script.js?v=8.5"></script>
-
-
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(r=>{for(let i of r)i.unregister();});}</script></body></html>
+  <script type="module" src="script.js?v=9.5"></script>
+  <script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(r=>{for(let i of r)i.unregister();});}</script>
+</body>
