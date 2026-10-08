@@ -194,19 +194,80 @@ window.closePlayer = function() {
 
 // التقاط حدث زر الرجوع في الهاتف
 window.addEventListener('popstate', function(event) {
-  const modal = document.getElementById('playerModal');
-  if (modal && modal.classList.contains('open')) {
-    modal.classList.remove('open');
+  // إغلاق مشغل الصوت إذا كان مفتوح
+  const playerModal = document.getElementById('playerModal');
+  if (playerModal && playerModal.classList.contains('open')) {
+    playerModal.classList.remove('open');
     if (progressInterval) clearInterval(progressInterval);
+  }
+  
+  // إغلاق نافذة تأكيد المسح إذا كانت مفتوحة
+  const confirmModal = document.getElementById('confirmModal');
+  if (confirmModal && confirmModal.classList.contains('open')) {
+    confirmModal.classList.remove('open');
   }
 });
 
 window.toggleModalPlay = function() {
   if (!activeAudio) return;
+
+  const otherAudioId = activeAudio.id === 'vocalAudio' ? 'instAudio' : 'vocalAudio';
+  const otherAudio = document.getElementById(otherAudioId);
+
   if (activeAudio.paused) {
+    // إيقاف الصوت الآخر بتلاشي إذا كان شغال
+    if (otherAudio && !otherAudio.paused) {
+      clearInterval(otherAudio.fadeInterval);
+      let otherVol = otherAudio.volume;
+      otherAudio.fadeInterval = setInterval(() => {
+        otherVol -= 0.1;
+        if (otherVol > 0.05) {
+          otherAudio.volume = otherVol;
+        } else {
+          clearInterval(otherAudio.fadeInterval);
+          otherAudio.pause();
+          otherAudio.volume = 1;
+        }
+      }, 40);
+    }
+
+    // تشغيل الصوت الحالي بتلاشي
+    clearInterval(activeAudio.fadeInterval);
+    activeAudio.volume = 0;
     activeAudio.play();
+    let activeVol = 0;
+    activeAudio.fadeInterval = setInterval(() => {
+      activeVol += 0.1;
+      if (activeVol < 0.95) {
+        activeAudio.volume = activeVol;
+      } else {
+        clearInterval(activeAudio.fadeInterval);
+        activeAudio.volume = 1;
+      }
+    }, 40);
+
   } else {
-    activeAudio.pause();
+    // إيقاف الصوت الحالي بتلاشي
+    clearInterval(activeAudio.fadeInterval);
+    let currentVol = activeAudio.volume;
+    activeAudio.fadeInterval = setInterval(() => {
+      currentVol -= 0.1;
+      if (currentVol > 0.05) {
+        activeAudio.volume = currentVol;
+      } else {
+        clearInterval(activeAudio.fadeInterval);
+        activeAudio.pause();
+        activeAudio.volume = 1;
+        syncPlayPauseIcon(); // تحديث الأيقونة الحقيقية بعد الإيقاف الفعلي
+      }
+    }, 40);
+
+    // تغيير الأيقونة فوراً لتعطي شعور بالاستجابة السريعة للمستخدم
+    const icon = document.querySelector('#modalPlayBtn i');
+    const artwork = document.getElementById('playerArtwork');
+    icon.className = 'fas fa-play';
+    artwork.classList.remove('playing');
+    return; 
   }
   syncPlayPauseIcon();
 }
@@ -320,28 +381,46 @@ window.startProcessing = async function() {
 
     const client = await Client.connect(spaceName, clientConfig);
     
-    // الحل الجذري: قراءة اسم النموذج من الأزرار الجديدة (الراديو)
-    let safeModelName = "6_HP-Karaoke-UVR.pth"; // الافتراضي الجديد: موسيقى وكورال
+    // الحل الجذري: محرك هجين (Hybrid Engine)
     const selectedModelRadio = document.querySelector('input[name="model_choice"]:checked');
-    if (selectedModelRadio) {
-      safeModelName = selectedModelRadio.value;
+    const isKaraoke = selectedModelRadio && selectedModelRadio.id === 'model_karaoke';
+
+    let apiEndpoint = "";
+    let predictParams = {};
+
+    if (isKaraoke) {
+      // خيار 1: موسيقى وكورال (باستخدام محرك Roformer الخرافي كما في موقع MVSep)
+      apiEndpoint = "/roformer_separator";
+      predictParams = {
+        audio: currentFile,
+        model_key: "MelBand Roformer | Karaoke by Gabox", // أقوى نموذج كاريوكي حالياً
+        out_format: "wav",
+        segment_size: 256,
+        override_seg_size: false,
+        overlap: 8,
+        batch_size: 1,
+        norm_thresh: 0.9,
+        amp_thresh: 1.0,
+        single_stem: ""
+      };
+    } else {
+      // خيار 2: موسيقى فقط (نستخدم محرك MDX23C الجبار)
+      apiEndpoint = "/mdxc_separator";
+      predictParams = {
+        audio: currentFile,
+        model: "MDX23C-8KFFT-InstVoc_HQ_2.ckpt",
+        out_format: "wav",
+        segment_size: 256,
+        override_seg_size: false,
+        overlap: 8,
+        batch_size: 1,
+        norm_thresh: 0.9,
+        amp_thresh: 1.0,
+        single_stem: ""
+      };
     }
 
-    const result = await client.predict("/vrarch_separator", {
-      audio: currentFile,
-      model: safeModelName,
-      out_format: "wav",
-      window_size: parseInt(document.getElementById('cfg_window').value),
-      aggression: parseInt(document.getElementById('cfg_agg').value),
-      tta: document.getElementById('cfg_tta').checked,
-            post_process: document.getElementById('cfg_post').checked,
-      post_process_threshold: 0.2,
-      high_end_process: document.getElementById('cfg_high').checked,
-      batch_size: 1,
-      norm_thresh: 0.9,
-      amp_thresh: 1.0,
-      single_stem: "(None)"
-    });
+    const result = await client.predict(apiEndpoint, predictParams);
 
     clearInterval(simInterval);
     document.getElementById('progressStatus').innerText = 'تم العزل! جاري تحميل الصوتيات للمتصفح...';
@@ -377,8 +456,10 @@ window.startProcessing = async function() {
       }
     };
 
+    // كلا المحركين (Roformer و MDX23C) يعطيان الموسيقى أولاً [0] والمطرب ثانياً [1]
     const rawInstUrl = getUrl(result.data[0]);
     const rawVocalUrl = getUrl(result.data[1]);
+
     const instBlob = await fetchAudio(rawInstUrl);
     const vocalBlob = await fetchAudio(rawVocalUrl);
 
@@ -387,9 +468,9 @@ window.startProcessing = async function() {
     document.getElementById('instAudio').src = instBlob;
     document.getElementById('vocalAudio').src = vocalBlob;
 
-    // إخفاء بطاقة المطرب بالاعتماد على الاسم الآمن
+    // إظهار بطاقة المطرب والموسيقى دائماً لأن نماذج MDX تفصل المسارين بنجاح
     const vocalCard = document.getElementById('vocalCard');
-    if (!vocalBlob || safeModelName.includes('1_HP-UVR')) {
+    if (!vocalBlob) {
       vocalCard.style.display = 'none';
     } else {
       vocalCard.style.display = 'flex';
@@ -506,9 +587,23 @@ window.loadHistory = function() {
 }
 
 window.clearHistory = function() {
+  document.getElementById('confirmModal').classList.add('open');
+  history.pushState({ confirmOpen: true }, '', '#confirm');
+}
+
+window.closeConfirmModal = function() {
+  if (window.location.hash === '#confirm') {
+    history.back(); // هذا سيفعل حدث popstate ويقفل النافذة
+  } else {
+    document.getElementById('confirmModal').classList.remove('open');
+  }
+}
+
+window.confirmClearHistory = function() {
   localStorage.removeItem('voiceHistory');
   loadHistory();
   showToast('تم مسح السجل بنجاح', 'success');
+  closeConfirmModal();
 }
 
 window.saveSettings = async function() {

@@ -755,3 +755,82 @@ canvas {
 @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ====== CONFIRM MODAL ====== */
+.confirm-modal {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.confirm-modal.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.confirm-modal-content {
+  background: var(--bg-card);
+  border-radius: 24px;
+  padding: 2rem 1.5rem;
+  width: 85%;
+  max-width: 350px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  transform: scale(0.9);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid var(--border-color);
+}
+.confirm-modal.open .confirm-modal-content {
+  transform: scale(1);
+}
+.confirm-icon {
+  font-size: 3rem;
+  color: var(--danger);
+  margin-bottom: 1rem;
+}
+.confirm-modal-content h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+.confirm-modal-content p {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+.confirm-actions {
+  display: flex;
+  gap: 1rem;
+}
+.confirm-actions button {
+  flex: 1;
+  padding: 0.8rem;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: 0.2s;
+}
+.btn-cancel {
+  background: var(--bg-main);
+  color: var(--text-dark);
+  border: 1px solid var(--border-color);
+}
+.btn-cancel:active { transform: scale(0.95); background: #e2e8f0; }
+.btn-confirm {
+  background: var(--danger);
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+.btn-confirm:active { transform: scale(0.95); box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2); }

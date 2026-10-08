@@ -291,6 +291,19 @@
     </div>
   </div>
 
-  <script type="module" src="script.js?v=9.6"></script>
+    <!-- CONFIRMATION MODAL -->
+  <div class="confirm-modal" id="confirmModal">
+    <div class="confirm-modal-content">
+      <div class="confirm-icon"><i class="fas fa-trash-alt"></i></div>
+      <h3>تأكيد الحذف</h3>
+      <p>هل أنت متأكد أنك تريد مسح السجل بالكامل؟ لن تتمكن من استرجاع المقاطع بعد حذفها.</p>
+      <div class="confirm-actions">
+        <button class="btn-cancel" onclick="closeConfirmModal()">إلغاء</button>
+        <button class="btn-confirm" onclick="confirmClearHistory()">نعم، امسح</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="script.js?v=9.8"></script>
   <script>if('serviceWorker' in navigator){navigator.serviceWorker.getRegistrations().then(r=>{for(let i of r)i.unregister();});}</script>
 </body>
